@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>抓取61 - 希沃大屏多主题版</title>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ================= 主题色彩变量库 ================= */
+        :root {
+            /* 默认主题：综艺红黄（充满活力与激情） */
+            --bg-gradient: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+            --box-bg: #ffffff;
+            --box-border: #ff4757;
+            --box-inner: #ffeaa7;
+            --title-color: #ff4757;
+            --title-shadow: #ffeaa7;
+            --number-color: #ffdd59;
+            --number-shadow: #ff4757;
+            --btn-active-bg: #ff4757;
+            --btn-active-shadow: #c0392b;
+            --shockwave-color: #ff4757;
+        }
+
+        body.theme-neon {
+            /* 主题二：赛博霓虹（科技感、酷炫，高年级学生最爱） */
+            --bg-gradient: radial-gradient(circle at center, #130f40 0%, #000000 100%);
+            --box-bg: #1e272e;
+            --box-border: #00f2fe;
+            --box-inner: #ff0844;
+            --title-color: #00f2fe;
+            --title-shadow: #ff0844;
+            --number-color: #00ff87;
+            --number-shadow: #00b8d4;
+            --btn-active-bg: #00f2fe;
+            --btn-active-shadow: #0097a7;
+            --shockwave-color: #00ff87;
+        }
+
+        body.theme-forest {
+            /* 主题三：森林绿橘（护眼、清新、自然） */
+            --bg-gradient: radial-gradient(circle at center, #1b4332 0%, #081c15 100%);
+            --box-bg: #f1faee;
+            --box-border: #52b788;
+            --box-inner: #b7e4c7;
+            --title-color: #40916c;
+            --title-shadow: #d8f3dc;
+            --number-color: #ffb703;
+            --number-shadow: #fb8500;
+            --btn-active-bg: #52b788;
+            --btn-active-shadow: #40916c;
+            --shockwave-color: #52b788;
+        }
+
+        body.theme-magic {
+            /* 主题四：魔法紫金（高级感、神秘、奖励环节适用） */
+            --bg-gradient: radial-gradient(circle at center, #3c096c 0%, #10002b 100%);
+            --box-bg: #faf5ff;
+            --box-border: #9d4edd;
+            --box-inner: #e0aaff;
+            --title-color: #7b2cbf;
+            --title-shadow: #c77dff;
+            --number-color: #ffea00;
+            --number-shadow: #ff9e00;
+            --btn-active-bg: #9d4edd;
+            --btn-active-shadow: #5a189a;
+            --shockwave-color: #ffea00;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* 彻底禁用大屏自带的缩放和滑动手势 */
+        }
+
+        body {
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg-gradient);
+            font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* 主题切换面板（悬浮在右上角） */
+        .theme-switcher {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+        }
+        .theme-label { color: rgba(255,255,255,0.8); font-size: 2.5vh; font-weight: bold; }
+        .theme-dot {
+            width: 4vh; height: 4vh;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .theme-dot:active { transform: scale(0.8); }
+        .dot-default { background: linear-gradient(135deg, #ff4757, #ffdd59); }
+        .dot-neon { background: linear-gradient(135deg, #00f2fe, #00ff87); }
+        .dot-forest { background: linear-gradient(135deg, #52b788, #ffb703); }
+        .dot-magic { background: linear-gradient(135deg, #9d4edd, #ffea00); }
+
+        #touch-layer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 5; cursor: pointer;
+        }
+
+        #confetti-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 999;
+        }
+
+        /* 主盲盒展示区 */
+        .blind-box {
+            position: relative;
+            width: 85vw; max-width: 800px;
+            height: 70vh; min-height: 500px;
+            background: var(--box-bg);
+            border-radius: 40px;
+            border: 8px solid var(--box-border);
+            box-shadow: 
+                0 30px 60px rgba(0,0,0,0.6),
+                inset 0 0 0 8px var(--box-inner);
+            display: flex; flex-direction: column;
+            align-items: center; padding: 30px 20px;
+            z-index: 10;
+            transition: all 0.5s ease;
+        }
+
+        .title {
+            color: var(--title-color);
+            font-size: 5vh; font-weight: 900; margin-bottom: 5px;
+            letter-spacing: 4px;
+            text-shadow: 2px 2px 0px var(--title-shadow);
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        .subtitle {
+            font-size: 2.5vh; color: #7f8fa6; font-weight: bold; margin-bottom: 30px;
+        }
+
+        /* 速度控制区 */
+        .speed-controls {
+            display: flex; gap: 20px; margin-bottom: 20px; z-index: 20;
+        }
+        .speed-btn {
+            background: #f1f2f6;
+            border: 4px solid #ced6e0; border-radius: 30px;
+            padding: 15px 30px; font-size: 2.5vh; font-weight: 900;
+            color: #2f3542; cursor: pointer;
+            box-shadow: 0 8px 0 #ced6e0; transition: all 0.1s;
+        }
+        .speed-btn:active { transform: translateY(8px); box-shadow: 0 0px 0 #ced6e0; }
+        
+        .speed-btn.active {
+            background: var(--btn-active-bg);
+            border-color: var(--btn-active-shadow);
+            color: #fff;
+            box-shadow: 0 8px 0 var(--btn-active-shadow);
+            transform: translateY(0);
+        }
+        .speed-btn.active:active { transform: translateY(8px); box-shadow: 0 0px 0 var(--btn-active-shadow); }
+
+        /* 巨型数字显示区 */
+        .number-container {
+            flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%;
+        }
+
+        #number-display {
+            font-size: 28vh; font-weight: 900; line-height: 1; text-align: center;
+            color: var(--number-color);
+            text-shadow: 
+                -4px -4px 0 #2f3542, 4px -4px 0 #2f3542,
+                -4px  4px 0 #2f3542, 4px  4px 0 #2f3542,
+                 8px  8px 0 var(--number-shadow), 
+                 0 20px 30px rgba(0,0,0,0.3);
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        /* 定格时的冲击波特效 */
+        .shockwave {
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px;
+            border: 15px solid var(--shockwave-color);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0; pointer-events: none;
+        }
+        .wave-anim { animation: pulse-wave 0.5s ease-out; }
+        @keyframes pulse-wave {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; border-width: 30px; }
+            100% { transform: translate(-50%, -50%) scale(40); opacity: 0; border-width: 0px; }
+        }
+
+        .bounce { animation: hitBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        @keyframes hitBounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.3) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        /* 结果显示框 */
+        #result-box { height: 10vh; display: flex; align-items: center; justify-content: center; }
+        .result-text {
+            font-size: 3.5vh; font-weight: 900; color: #fff; background: #2f3542;
+            padding: 15px 40px; border-radius: 50px; opacity: 0; transform: scale(0.5);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .result-text.show { opacity: 1; transform: scale(1); }
+        .result-text.win {
+            background: var(--btn-active-bg);
+            border-color: #fff;
+            animation: winPulse 1s infinite alternate;
+        }
+        @keyframes winPulse {
+            from { box-shadow: 0 0 10px var(--number-color); transform: scale(1); }
+            to { box-shadow: 0 0 40px var(--number-color); transform: scale(1.05); }
+        }
+
+        .instruction {
+            margin-top: 3vh; color: rgba(255,255,255,0.8);
+            font-weight: bold; font-size: 3vh; z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+    
+    <!-- 全屏触摸层 -->
+    <div id="touch-layer"></div>
+
+    <!-- 主题切换栏 (加在右上角，避开主点按区) -->
+    <div class="theme-switcher">
+        <span class="theme-label">🎨 换肤:</span>
+        <div class="theme-dot dot-default" onclick="changeTheme('')" onpointerdown="event.stopPropagation()"></div>
+        <div class="theme-dot dot-neon" onclick="changeTheme('theme-neon')" onpointerdown="event.stopPropagation()"></div>
+        <div class="theme-dot dot-forest" onclick="changeTheme('theme-forest')" onpointerdown="event.stopPropagation()"></div>
+        <div class="theme-dot dot-magic" onclick="changeTheme('theme-magic')" onpointerdown="event.stopPropagation()"></div>
+    </div>
+
+    <div class="blind-box">
+        <div class="title">✨ 挑 战 6 1 ✨</div>
+        <div class="subtitle">- 看看谁的反应最快 -</div>
+
+        <div class="speed-controls" id="speed-controls">
+            <!-- 阻止冒泡，防止点击调速按钮时触发游戏开始/停止 -->
+            <button class="speed-btn" data-speed="150" onpointerdown="event.stopPropagation()">🚶 热身</button>
+            <button class="speed-btn active" data-speed="60" onpointerdown="event.stopPropagation()">🏃 奔跑</button>
+            <button class="speed-btn" data-speed="20" onpointerdown="event.stopPropagation()">🚀 飞驰</button>
+            <button class="speed-btn" data-speed="8" onpointerdown="event.stopPropagation()">⚡ 闪电</button>
+        </div>
+
+        <div class="number-container">
+            <div id="number-display">0</div>
+            <div class="shockwave" id="shockwave"></div>
+        </div>
+
+        <div id="result-box">
+            <div class="result-text" id="result-msg"></div>
+        </div>
+    </div>
+
+    <div class="instruction">
+        拍打屏幕任意区域 抓取数字
+    </div>
+
+    <script>
+        // ================= 1. 主题切换 =================
+        function changeTheme(themeName) {
+            document.body.className = themeName;
+            playClickSound(); // 换肤时也给个音效反馈
+        }
+
+        // ================= 2. 核心游戏逻辑 =================
+        const numberDisplay = document.getElementById('number-display');
+        const resultMsg = document.getElementById('result-msg');
+        const speedBtns = document.querySelectorAll('.speed-btn');
+        const touchLayer = document.getElementById('touch-layer');
+        const shockwave = document.getElementById('shockwave');
+
+        let isRunning = false;
+        let currentNumber = 0;
+        let intervalId = null;
+        let currentSpeed = 60; 
+        let audioCtx = null; 
+
+        speedBtns.forEach(btn => {
+            btn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); 
+                speedBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentSpeed = parseInt(e.target.getAttribute('data-speed'));
+                if(isRunning) {
+                    clearInterval(intervalId);
+                    intervalId = setInterval(rollNumber, currentSpeed);
+                }
+                playClickSound();
+            });
+        });
+
+        function rollNumber() {
+            currentNumber++;
+            if (currentNumber > 100) currentNumber = 0;
+            numberDisplay.innerText = currentNumber;
+            if(currentSpeed >= 20) playTickSound(); 
+        }
+
+        // === 核心修改：启停逻辑 ===
+        function toggleGame() {
+            initAudio(); 
+            
+            if (isRunning) {
+                // 【结束滚动】
+                isRunning = false;
+                clearInterval(intervalId);
+                
+                // 触发冲击波和Q弹动画
+                numberDisplay.classList.remove('bounce');
+                void numberDisplay.offsetWidth; 
+                numberDisplay.classList.add('bounce');
+                
+                shockwave.classList.remove('wave-anim');
+                void shockwave.offsetWidth;
+                shockwave.classList.add('wave-anim');
+
+                checkResult();
+                playStopSound();
+            } else {
+                // 【开始滚动】
+                isRunning = true;
+                
+                // --- 核心改动：每次开始前强制归零 ---
+                currentNumber = 0;
+                numberDisplay.innerText = currentNumber;
+                // ------------------------------------
+
+                resultMsg.classList.remove('show');
+                numberDisplay.classList.remove('bounce');
+                intervalId = setInterval(rollNumber, currentSpeed);
+            }
+        }
+
+        touchLayer.addEventListener('pointerdown', toggleGame);
+
+        // 绑定空格键（电脑备用）
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                toggleGame();
+            }
+        });
+
+        function checkResult() {
+            let msg = "";
+            let isWin = false;
+
+            if (currentNumber === 61) {
+                msg = "🎉 太棒了！精准命中 61 ！";
+                isWin = true;
+                fireConfetti(); 
+                setTimeout(playWinSound, 100);
+            } else if (currentNumber === 60 || currentNumber === 62) {
+                msg = "😫 哎呀！就差一点点！";
+                setTimeout(playFailSound, 100);
+            } else if (currentNumber <= 10) {
+                msg = "🍼 反应太快啦，刚起步就按了！";
+            } else if (currentNumber === 100) {
+                msg = "💯 100分满级反应！";
+            } else {
+                msg = `抓到了 ${currentNumber}，再试一次吧！`;
+            }
+
+            resultMsg.innerText = msg;
+            resultMsg.className = 'result-text show' + (isWin ? ' win' : '');
+        }
+
+        // ================= 3. 音效引擎 =================
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function createOscillator(type, freq, duration, vol, isSweep = false) {
+            if(!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                if (isSweep) {
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + duration);
+                } else {
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                }
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playTickSound() { createOscillator('sine', 800, 0.05, 0.05); }
+        function playClickSound() { createOscillator('triangle', 600, 0.1, 0.1); }
+        function playStopSound() {
+            createOscillator('square', 150, 0.2, 0.3, true); 
+            setTimeout(()=> createOscillator('sine', 100, 0.3, 0.4), 20);
+        }
+        function playWinSound() {
+            if(!audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; 
+            notes.forEach((freq, i) => {
+                setTimeout(() => createOscillator('square', freq, 0.3, 0.2), i * 120);
+            });
+        }
+        function playFailSound() { createOscillator('sawtooth', 300, 0.6, 0.2, true); }
+
+        // ================= 4. 全屏礼花引擎 =================
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#ff69b4', '#ffffff'];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function fireConfetti() {
+            particles = [];
+            for (let i = 0; i < 250; i++) {
+                particles.push({
+                    x: canvas.width / 2, y: canvas.height / 2 + 100,
+                    r: Math.random() * 8 + 4,
+                    dx: Math.random() * 30 - 15, dy: Math.random() * -30 - 10,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05, tiltAngle: 0
+                });
+            }
+            if(particles.length === 250) animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (particles.length === 0) return;
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.tiltAngle += p.tiltAngleInc;
+                p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2; 
+                p.x += Math.sin(p.tiltAngle) * 2; 
+                p.dy += 0.5; p.y += p.dy; p.x += p.dx; p.dx *= 0.98; 
+                ctx.beginPath(); ctx.lineWidth = p.r; ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r); ctx.stroke();
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+    </script>
+</body>
+</html>
