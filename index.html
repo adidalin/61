@@ -278,7 +278,7 @@
     </div>
 
     <div class="instruction">
-        拍打屏幕任意区域 抓取数字
+        拍打屏幕任意区域 / 按空格 抓取数字
     </div>
 
     <script>
@@ -357,11 +357,23 @@
             }
         }
 
-        touchLayer.addEventListener('pointerdown', toggleGame);
+        // 点击屏幕触发游戏
+        touchLayer.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            toggleGame();
+        });
 
-        // 绑定空格键（电脑备用）
+        // 绑定空格键（电脑备用 + 大屏备用）
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                toggleGame();
+            }
+        });
+
+        // 也支持回车键作为备用（某些大屏可能需要）
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Enter' && !e.repeat) {
                 e.preventDefault();
                 toggleGame();
             }
