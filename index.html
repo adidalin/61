@@ -444,6 +444,7 @@
         const touchLayer = document.getElementById('touch-layer');
         const shockwave = document.getElementById('shockwave');
         const themeSwitcher = document.querySelector('.theme-switcher');
+        const blindBox = document.querySelector('.blind-box');
 
         let isRunning = false;
         let currentNumber = 0;
@@ -507,12 +508,23 @@
             }
         }
 
-        // 点击屏幕任意位置触发游戏（但要排除按钮和主题切换器）
+        // 点击屏幕任意位置触发游戏（排除主题切换器和按钮点击时的冒泡）
         touchLayer.addEventListener('pointerdown', (e) => {
             // 检查点击是否在主题切换器内
             if (themeSwitcher.contains(e.target)) {
                 return;
             }
+            e.preventDefault();
+            toggleGame();
+        });
+
+        // 盲盒内部直接点击也能触发（不包括按钮）
+        blindBox.addEventListener('pointerdown', (e) => {
+            // 不让按钮的点击冒泡到这里
+            if (e.target.classList.contains('speed-btn')) {
+                return;
+            }
+            // 其他地方点击都触发停止/开始
             e.preventDefault();
             toggleGame();
         });
