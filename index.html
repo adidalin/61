@@ -468,7 +468,7 @@
 
         function rollNumber() {
             currentNumber++;
-            if (currentNumber > 100) currentNumber = 0;
+            if (currentNumber > 70) currentNumber = 50;
             numberDisplay.innerText = currentNumber;
             if(currentSpeed >= 20) playTickSound(); 
         }
@@ -497,8 +497,8 @@
                 // 【开始滚动】
                 isRunning = true;
                 
-                // --- 核心改动：每次开始前强制归零 ---
-                currentNumber = 0;
+                // --- 核心改动：每次开始前设置为50 ---
+                currentNumber = 50;
                 numberDisplay.innerText = currentNumber;
                 // ------------------------------------
 
@@ -557,10 +557,10 @@
             } else if (currentNumber === 60 || currentNumber === 62) {
                 msg = "😫 哎呀！就差一点点！";
                 setTimeout(playFailSound, 100);
-            } else if (currentNumber <= 10) {
+            } else if (currentNumber <= 55) {
                 msg = "🍼 反应太快啦，刚起步就按了！";
-            } else if (currentNumber === 100) {
-                msg = "💯 100分满级反应！";
+            } else if (currentNumber === 70) {
+                msg = "💯 反应很棒！";
             } else {
                 msg = `抓到了 ${currentNumber}，再试一次吧！`;
             }
